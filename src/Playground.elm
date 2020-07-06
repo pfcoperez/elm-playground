@@ -37,10 +37,12 @@ module Playground exposing
   , lightGray, gray, darkGray
   )
 
+-- @docs picture, animation, game
+
 {-|
 
 # Playgrounds
-@docs picture, animation, game
+@docs animation, game
 
 # Shapes
 @docs Shape, circle, oval, square, rectangle, triangle, pentagon, hexagon, octagon, polygon
