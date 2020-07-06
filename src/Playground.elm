@@ -745,7 +745,11 @@ gameUpdate updateMemory msg (Game vis memory computer) =
 
     TouchMove maybeTouch ->
       let
-        maybePos = Maybe.map (\pos -> { x = Tuple.first pos, y = Tuple.second pos}) maybeTouch
+        touchPosToPos (pageX, pageY) =
+          { x = computer.screen.left + pageX
+          , y = computer.screen.top - pageY
+          }
+        maybePos = Maybe.map touchPosToPos maybeTouch
       in Game vis memory { computer | touch = TouchState maybePos }
 
 
