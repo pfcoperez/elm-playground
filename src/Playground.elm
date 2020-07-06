@@ -1,6 +1,6 @@
 module Playground exposing
-  ( picture
-  , animation
+  ( -- picture
+  animation
   , game
   --
   , Shape
@@ -90,6 +90,7 @@ module Playground exposing
 import Browser
 import Browser.Dom as Dom
 import Browser.Events as E
+import Html.Events.Extra.Touch as Touch
 import Html
 import Html.Attributes as H
 import Svg exposing (..)
@@ -101,46 +102,46 @@ import Time
 
 
 
--- PICTURE
+-- -- PICTURE
 
 
-{-| Make a picture! Here is a picture of a triangle with an eyeball:
+-- {-| Make a picture! Here is a picture of a triangle with an eyeball:
 
-    import Playground exposing (..)
+--     import Playground exposing (..)
 
-    main =
-      picture
-        [ triangle green 150
-        , circle white 40
-        , circle black 10
-        ]
+--     main =
+--       picture
+--         [ triangle green 150
+--         , circle white 40
+--         , circle black 10
+--         ]
 
--}
-picture : List Shape -> Program () Screen (Int, Int)
-picture shapes =
-  let
-    init () =
-      (toScreen 600 600, Cmd.none)
+-- -}
+-- picture : List Shape -> Program () Screen (Int, Int)
+-- picture shapes =
+--   let
+--     init () =
+--       (toScreen 600 600, Cmd.none)
 
-    view screen =
-      { title = "Playground"
-      , body = [ render screen shapes ]
-      }
+--     view screen =
+--       { title = "Playground"
+--       , body = [ render screen shapes ]
+--       }
 
-    update (width,height) _ =
-      ( toScreen (toFloat width) (toFloat height)
-      , Cmd.none
-      )
+--     update (width,height) _ =
+--       ( toScreen (toFloat width) (toFloat height)
+--       , Cmd.none
+--       )
 
-    subscriptions _ =
-      E.onResize Tuple.pair
-  in
-  Browser.document
-    { init = init
-    , view = view
-    , update = update
-    , subscriptions = subscriptions
-    }
+--     subscriptions _ =
+--       E.onResize Tuple.pair
+--   in
+--   Browser.document
+--     { init = init
+--     , view = view
+--     , update = update
+--     , subscriptions = subscriptions
+--     }
 
 
 
@@ -163,9 +164,15 @@ type alias Computer =
   , keyboard : Keyboard
   , screen : Screen
   , time : Time
+  , touch : TouchState
   }
 
 
+-- TOUCH
+
+type alias TouchState =
+  { maybePoint : Maybe { x : Float, y : Float }
+  }
 
 -- MOUSE
 
@@ -552,6 +559,7 @@ animationUpdate msg (Animation v s t as state) =
     MouseMove _ _          -> state
     MouseClick             -> state
     MouseButton _          -> state
+    TouchMove _            -> state
 
 
 
@@ -652,6 +660,7 @@ initialComputer =
   , keyboard = emptyKeyboard
   , screen = toScreen 600 600
   , time = Time (Time.millisToPosix 0)
+  , touch = TouchState Nothing
   }
 
 
@@ -691,6 +700,7 @@ type Msg
   | MouseMove Float Float
   | MouseClick
   | MouseButton Bool
+  | TouchMove (Maybe (Float, Float))
 
 
 gameUpdate : (Computer -> memory -> memory) -> Msg -> Game memory -> Game memory
@@ -731,6 +741,10 @@ gameUpdate updateMemory msg (Game vis memory computer) =
             , mouse = Mouse computer.mouse.x computer.mouse.y False False
         }
 
+    TouchMove maybeTouch ->
+      let
+        maybePos = Maybe.map (\pos -> { x = Tuple.first pos, y = Tuple.second pos}) maybeTouch
+      in Game vis memory { computer | touch = TouchState maybePos }
 
 
 -- SCREEN HELPERS
@@ -1488,7 +1502,7 @@ colorClamp number =
 -- RENDER
 
 
-render : Screen -> List Shape -> Html.Html msg
+render : Screen -> List Shape -> Html.Html Msg
 render screen shapes =
   let
     w = String.fromFloat screen.width
@@ -1497,7 +1511,11 @@ render screen shapes =
     y = String.fromFloat screen.bottom
   in
   svg
-    [ viewBox (x ++ " " ++ y ++ " " ++ w ++ " " ++ h)
+--    [ Touch.onStart Start
+    [ Touch.onMove onTouchMove
+--    , Touch.onEnd End
+--    , Touch.onCancel Cancel
+    , viewBox (x ++ " " ++ y ++ " " ++ w ++ " " ++ h)
     , H.style "position" "fixed"
     , H.style "top" "0"
     , H.style "left" "0"
@@ -1506,6 +1524,8 @@ render screen shapes =
     ]
     (List.map renderShape shapes)
 
+onTouchMove : Touch.Event -> Msg
+onTouchMove t = TouchMove (Maybe.map (\touch -> touch.clientPos) (List.head t.touches))
 
 -- TODO try adding Svg.Lazy to renderShape
 --
