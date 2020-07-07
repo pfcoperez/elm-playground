@@ -24,6 +24,7 @@ module Playground exposing
   , Mouse
   , Screen
   , Keyboard
+  , TouchState
   , toX
   , toY
   , toXY
@@ -66,7 +67,7 @@ module Playground exposing
 @docs Time, spin, wave, zigzag
 
 # Computer
-@docs Computer, Mouse, Screen, Keyboard, toX, toY, toXY
+@docs Computer, Mouse, Screen, Keyboard, TouchState, toX, toY, toXY
 
 # Colors
 @docs Color, rgb, red, orange, yellow, green, blue, purple, brown
@@ -172,6 +173,8 @@ type alias Computer =
 
 -- TOUCH
 
+{-| Figure out what is going on with the touch screen.
+-}
 type alias TouchState =
   { maybePoint : Maybe { x : Float, y : Float }
   }
@@ -1517,10 +1520,10 @@ render screen shapes =
     y = String.fromFloat screen.bottom
   in
   svg
---    [ Touch.onStart Start
-    [ Touch.onMove onTouchMove
---    , Touch.onEnd End
---    , Touch.onCancel Cancel
+    [ Touch.onStart onTouchEvent
+    , Touch.onMove onTouchEvent
+    , Touch.onEnd onTouchEvent
+    , Touch.onCancel onTouchEvent
     , viewBox (x ++ " " ++ y ++ " " ++ w ++ " " ++ h)
     , H.style "position" "fixed"
     , H.style "top" "0"
@@ -1530,8 +1533,8 @@ render screen shapes =
     ]
     (List.map renderShape shapes)
 
-onTouchMove : Touch.Event -> Msg
-onTouchMove t = TouchMove (Maybe.map (\touch -> touch.clientPos) (List.head t.touches))
+onTouchEvent : Touch.Event -> Msg
+onTouchEvent t = TouchMove (Maybe.map (\touch -> touch.clientPos) (List.head t.touches))
 
 -- TODO try adding Svg.Lazy to renderShape
 --
